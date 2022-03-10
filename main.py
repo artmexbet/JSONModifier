@@ -31,11 +31,12 @@ class MainWindow(QMainWindow, MainDesign):
         if filename[0]:
             with open(filename[0], "w") as f:
                 f.write("{}")
-            self.filename = filename
+            self.filename = filename[0]
             self.open_write_window()
 
     def open_write_window(self):
-        self.filename = QFileDialog.getOpenFileName(self, "Открыть файл", "", "JSON (*.json)")[0]
+        if not self.filename:
+            self.filename = QFileDialog.getOpenFileName(self, "Открыть файл", "", "JSON (*.json)")[0]
         if self.filename != "":
             window = WriteWindow(self.filename)
             self.hide()
@@ -43,7 +44,8 @@ class MainWindow(QMainWindow, MainDesign):
             self.show()
 
     def open_read_window(self):
-        self.filename = QFileDialog.getOpenFileName(self, "Открыть файл", "", "JSON (*.json)")[0]
+        if not self.filename:
+            self.filename = QFileDialog.getOpenFileName(self, "Открыть файл", "", "JSON (*.json)")[0]
         if self.filename != "":
             window = ReadWindow(self.filename)
             self.hide()
@@ -78,8 +80,18 @@ class WriteWindow(Dialog, WriteDesign):
         self.output.setText(self.current_query)
 
     def execute_action(self):
-        keys = self.expression.text().split(">")
+        keys = self.expression.text().strip().split(">")
         value = self.value.text()
+        # Проверка, является ли value словарём или числом
+        try:
+            value = json.loads(value)
+        except:
+            pass
+        try:
+            value = int(value)
+        except:
+            pass
+        # Изменение и запись
         try:
             temp = self.json
             for key in keys[:-1]:
@@ -117,9 +129,9 @@ class ReadWindow(Dialog, ReadDesign):
         self.output.setText(self.current_query)
 
     def execute_action(self):
-        exp = self.expression.text().split(">")
+        exp = self.expression.text().strip().split(">")
         try:
-            if exp:
+            if exp[0] != "":
                 temp = deepcopy(self.json)
                 for key in exp:
                     temp = temp[key]
